@@ -1,22 +1,33 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Theme } from "../../Context/ThemeProvider";
 import { Sun, Moon } from "lucide-react";
+import axios from "axios";
 
-const Navbar = ({setCategoryUrl}) => {
+const Navbar = ({ setCategoryUrl, setNews }) => {
+  const { theme, setTheme } = useContext(Theme);
   const [isOpen, setIsOpen] = useState(false);
   const menuToggle = () => {
     setIsOpen(!isOpen);
   };
 
-  const { theme, setTheme } = useContext(Theme);
   const themeToggle = () => {
-  const newTheme = theme === "dark" ? "light" : "dark";
-  setTheme(newTheme);
-  localStorage.setItem("Theme", newTheme);
-};
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    localStorage.setItem("Theme", newTheme);
+  };
 
+  const ref = useRef();
+    useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const navItems = [
     { id: 1, title: "Business", to: "#business" },
@@ -28,13 +39,24 @@ const Navbar = ({setCategoryUrl}) => {
     { id: 7, title: "Technology", to: "#technology" },
   ];
 
-const url = (category) => {
-  const categoryUrl = category.replace(/^#/, "");
-  setCategoryUrl(categoryUrl);
-};
+  const api_key = import.meta.env.VITE_NEWS_API;
+  const handleSearch = async (e) => {
+    const search = e.target.value;
+    try {
+      const res = await axios.get(`https://newsapi.org/v2/top-headlines?q=${search}&apiKey=${api_key}`);
+      setNews(res.data.articles);
+    } catch (error) {
+      console.log(error)
+    };
+  };
+
+  const url = (category) => {
+    const categoryUrl = category.replace(/^#/, "");
+    setCategoryUrl(categoryUrl);
+  };
 
   return (
-    <nav className="w-full bg-linear-to-r from-blue-800 to-blue-900 sticky top-0 z-50 shadow-md">
+    <nav ref={ref} className="w-full bg-linear-to-r from-blue-800 to-blue-900 sticky top-0 z-50 shadow-md">
       <div className="container mx-auto h-12 flex justify-between items-center px-5">
         <h1 className="text-white text-2xl font-bold cursor-pointer">
           News <span className="text-amber-400">App</span>
@@ -43,7 +65,7 @@ const url = (category) => {
           {navItems.map((item) => (
             <li key={item.id}>
               <Link
-                onClick={()=> url(item.to)}
+                onClick={() => url(item.to)}
                 className="text-gray-200 hover:text-white duration-200"
                 to={item.to}
               >
@@ -56,6 +78,7 @@ const url = (category) => {
           <form className="hidden sm:block">
             <input
               type="text"
+              onChange={handleSearch}
               placeholder="Search your news"
               className="px-3 py-2 bg-gray-200 text-black rounded-md focus:ring-2 focus:ring-blue-600 outline-none"
             />
@@ -63,7 +86,7 @@ const url = (category) => {
           <button
             onClick={themeToggle}
           >
-            { theme === "dark" ? <Sun size={22} /> : <Moon size={22} className="text-gray-200"/>}
+            {theme === "dark" ? <Sun size={22} /> : <Moon size={22} className="text-gray-200" />}
           </button>
           <button onClick={menuToggle} className="text-gray-200 lg:hidden">
             {isOpen ? <X size={30} /> : <Menu size={30} />}
@@ -85,12 +108,13 @@ const url = (category) => {
               </li>
             ))}
             <form className="sm:hidden">
-            <input
-              type="text"
-              placeholder="Search your news"
-              className="px-2 py-2 w-full bg-gray-200 text-black rounded-md focus:ring-2 focus:ring-blue-600 outline-none"
-            />
-          </form>
+              <input
+                onChange={handleSearch}
+                type="text"
+                placeholder="Search your news"
+                className="px-2 py-2 w-full bg-gray-200 text-black rounded-md focus:ring-2 focus:ring-blue-600 outline-none"
+              />
+            </form>
           </ul>
         </div>
       )}

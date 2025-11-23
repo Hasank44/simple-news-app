@@ -10,6 +10,7 @@ function App() {
   const background = theme === "dark" ? "#000000" : "#ffffff";
 
   const [categoryUrl, setCategoryUrl] = useState("general");
+  const [news, setNews] = useState([]);
 
   return (
     <main
@@ -18,8 +19,8 @@ function App() {
       }`}
       style={{ backgroundColor: background }}
     >
-      <Navbar setCategoryUrl={setCategoryUrl} />
-      <Home category={categoryUrl} />
+      <Navbar setCategoryUrl={setCategoryUrl} setNews={setNews} />
+      <Home category={categoryUrl} news={news} setNews={setNews} />
       <Footer />
     </main>
   );
